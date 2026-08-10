@@ -13,6 +13,19 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   List<TaskModel> tasks = [];
+  final TextEditingController _searchController = TextEditingController();
+
+  String searchQuery = "";
+
+  List<TaskModel> get filteredTasks {
+    if (searchQuery.trim().isEmpty) {
+      return tasks;
+    }
+
+    return tasks.where((task) {
+      return task.title.toLowerCase().contains(searchQuery.toLowerCase());
+    }).toList();
+  }
 
   @override
   void initState() {
@@ -111,6 +124,37 @@ class _HomeViewState extends State<HomeView> {
       appBar: AppBar(title: const Text("Task Manager"), centerTitle: true),
       body: Column(
         children: [
+          // Search Bar
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 5),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) {
+                setState(() {
+                  searchQuery = value;
+                });
+              },
+              decoration: InputDecoration(
+                hintText: "Search tasks",
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+
+                          setState(() {
+                            searchQuery = "";
+                          });
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+            ),
+          ),
           Card(
             margin: const EdgeInsets.all(12),
             elevation: 4,
@@ -156,18 +200,26 @@ class _HomeViewState extends State<HomeView> {
           ),
 
           Expanded(
-            child: tasks.isEmpty
-                ? const Center(child: Text("No Tasks Available"))
+            child: filteredTasks.isEmpty
+                ? Center(
+                    child: Text(
+                      searchQuery.isEmpty
+                          ? "No Tasks Available"
+                          : "No tasks found",
+                      style: const TextStyle(fontSize: 18, color: Colors.black),
+                    ),
+                  )
                 : ListView.builder(
-                    itemCount: tasks.length,
+                    itemCount: filteredTasks.length,
                     itemBuilder: (context, index) {
-                      final task = tasks[index];
-
+                      final task = filteredTasks[index];
+                      // Find the original task index
+                      final originalIndex = tasks.indexOf(task);
                       return TaskItemWidget(
                         task: task,
-                        onEdit: () => editTask(index),
-                        onDelete: () => deleteTask(index),
-                        onChanged: (_) => toggleCompleted(index),
+                        onEdit: () => editTask(originalIndex),
+                        onDelete: () => deleteTask(originalIndex),
+                        onChanged: (_) => toggleCompleted(originalIndex),
                       );
                     },
                   ),
@@ -179,5 +231,11 @@ class _HomeViewState extends State<HomeView> {
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 }

@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../model/task_model.dart';
 
@@ -23,7 +23,7 @@ class SharedPrefService {
 
     List<String>? taskList = prefs.getStringList(taskKey);
 
-    print("Stored Tasks: $taskList");
+    debugPrint("Stored Tasks: $taskList");
 
     if (taskList == null) {
       return [];
